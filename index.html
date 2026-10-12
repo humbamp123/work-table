@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5 × 10 Mobile Work Table — Plan Sheet Generator</title>
+<meta name="description" content="Pick how you'll use it and the height you want, then get a cut list, boards to buy, to-scale drawings and step-by-step instructions for a sturdy, rolling 5 ft x 10 ft work table.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="calc.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<a class="skip-link" href="#sheet">Skip to the plan sheet</a>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <a href="../" class="back-link">&larr; Back to Portfolio</a>
+    <p class="masthead-kicker">Plan Sheet Generator · 5 ft × 10 ft · Six legs · Rolls</p>
+    <h1>Mobile Work Table</h1>
+    <p class="masthead-sub">
+      Pick how you'll use it and the height you want. You get the cut list, the boards to buy,
+      to-scale drawings and every step to build a 2x4-and-5×5-plywood table that is dead flat,
+      heavy enough to trust, and still rolls out of the way.
+    </p>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ============ INPUTS ============ -->
+  <section class="panel inputs" aria-label="Table options">
+    <div class="panel-head">
+      <h2>01 · Set it up</h2>
+      <div class="unit-toggle" role="group" aria-label="Units">
+        <button type="button" id="unit-imperial" class="active" aria-pressed="true">in</button>
+        <button type="button" id="unit-metric" aria-pressed="false">cm/mm</button>
+      </div>
+    </div>
+
+    <form id="table-form" autocomplete="off">
+      <fieldset>
+        <legend>What's it for?</legend>
+        <div class="use-cards">
+          <label class="use-card">
+            <input type="radio" name="use" value="assembly" checked>
+            <span>Assembly<small>glue-ups, clamping</small></span>
+          </label>
+          <label class="use-card">
+            <input type="radio" name="use" value="shop">
+            <span>Shop bench<small>repairs, storage</small></span>
+          </label>
+          <label class="use-card">
+            <input type="radio" name="use" value="craft">
+            <span>Craft &amp; layout<small>fabric, paper, cutting</small></span>
+          </label>
+          <label class="use-card">
+            <input type="radio" name="use" value="outfeed">
+            <span>Saw outfeed<small>matched to your saw</small></span>
+          </label>
+        </div>
+        <p class="hint" id="use-blurb"></p>
+      </fieldset>
+
+      <div class="field" id="field-height">
+        <div class="label-row">
+          <label for="height">Finished height <span class="unit-suffix" data-for="height"></span></label>
+          <button type="button" class="reset-link" id="reset-height" hidden>reset to preset</button>
+        </div>
+        <input type="number" id="height" inputmode="decimal" step="any" aria-describedby="ergo-hint err-height">
+        <p class="hint ergo-hint" id="ergo-hint"></p>
+        <p class="field-error" id="err-height" role="alert"></p>
+      </div>
+
+      <div class="field" id="field-sawHeight" hidden>
+        <label for="sawHeight">Saw table height <span class="unit-suffix" data-for="sawHeight"></span></label>
+        <input type="number" id="sawHeight" inputmode="decimal" step="any" aria-describedby="saw-hint err-sawHeight">
+        <p class="hint" id="saw-hint">Floor to the saw's cast-iron top, measured where the table will park.</p>
+        <p class="field-error" id="err-sawHeight" role="alert"></p>
+      </div>
+
+      <div class="field" id="field-sawDrop" hidden>
+        <label for="sawDrop">Drop below the saw <span class="unit-suffix" data-for="sawDrop"></span></label>
+        <input type="number" id="sawDrop" inputmode="decimal" step="any" aria-describedby="err-sawDrop">
+        <p class="hint">1/8" is typical: stock slides on without catching, nothing tips.</p>
+        <p class="field-error" id="err-sawDrop" role="alert"></p>
+      </div>
+
+      <fieldset class="optional">
+        <legend>Options</legend>
+        <label class="check-row"><input type="checkbox" id="shelf"> Lower shelf</label>
+        <label class="check-row"><input type="checkbox" id="skin"> Replaceable 1/4" skin on top</label>
+        <div class="field">
+          <label for="casterHeight">Caster overall height <span class="unit-suffix" data-for="casterHeight"></span></label>
+          <input type="number" id="casterHeight" inputmode="decimal" step="any" aria-describedby="caster-hint err-casterHeight">
+          <p class="hint" id="caster-hint">Floor to the top of the mounting plate, from the caster's spec sheet. Typical: 3" wheel 4", 4" wheel 5-1/8", 5" wheel 6-1/4", leveling caster 4".</p>
+          <p class="field-error" id="err-casterHeight" role="alert"></p>
+        </div>
+      </fieldset>
+    </form>
+
+    <div class="print-row">
+      <button type="button" id="print-btn">Print plan sheet</button>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="sheet" id="sheet" aria-label="Generated plan sheet">
+
+    <p class="print-config" id="print-config"></p>
+
+    <div id="warnings" aria-live="polite"></div>
+
+    <section class="sheet-block">
+      <h2>02 · Your table</h2>
+      <div id="summary" class="summary-grid"></div>
+    </section>
+
+    <section class="sheet-block">
+      <h2>03 · Drawings <span class="not-to-scale">to scale</span></h2>
+      <p class="diagram-title">Plan view — top panels over the framing</p>
+      <div id="diagram-plan" class="diagram"></div>
+      <ul class="legend" aria-label="Plan view legend">
+        <li class="seam-1">layer 1 seams</li>
+        <li class="seam-2" id="legend-seam-2">layer 2 seams</li>
+        <li class="seam-skin" id="legend-seam-skin">skin seams</li>
+        <li class="joist">joists &amp; frame</li>
+      </ul>
+      <p class="diagram-title">Side elevation — long side</p>
+      <div id="diagram-elev" class="diagram"></div>
+    </section>
+
+    <section class="sheet-block">
+      <h2>04 · Cut list</h2>
+      <div class="table-wrap">
+        <table id="cutlist-lumber">
+          <caption>Lumber</caption>
+          <thead>
+            <tr><th scope="col">Part</th><th scope="col">Qty</th><th scope="col">Stock</th><th scope="col">T × W × L</th><th scope="col">Notes</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table id="cutlist-sheets">
+          <caption>Sheet goods</caption>
+          <thead>
+            <tr><th scope="col">Part</th><th scope="col">Qty</th><th scope="col">Stock</th><th scope="col">T × W × L</th><th scope="col">Notes</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="fine" id="boards-note"></p>
+    </section>
+
+    <section class="sheet-block">
+      <h2>05 · Materials &amp; tools</h2>
+      <div class="two-col">
+        <div>
+          <h3>Materials</h3>
+          <ul id="materials" class="checklist"></ul>
+        </div>
+        <div>
+          <h3>Tools</h3>
+          <ul class="checklist">
+            <li>Track saw, or circular saw with a straightedge (sheet cuts)</li>
+            <li>Miter saw (cross members, legs)</li>
+            <li>Drill and impact driver, countersink bit, socket for the lags</li>
+            <li>Framing square, 4 ft level or straightedge, tape, chalk line</li>
+            <li>Clamps — at least four long ones</li>
+            <li>Random-orbit sander; router with flush-trim and roundover bits</li>
+            <li>Eye, ear and dust protection, and a helper for the sheets and the flip</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet-block">
+      <h2>06 · Build steps</h2>
+      <ol id="build-steps" class="steps"></ol>
+    </section>
+
+    <section class="sheet-block">
+      <h2>07 · Casters &amp; moving it</h2>
+      <div id="caster-card"></div>
+      <ul id="notes" class="notes"></ul>
+    </section>
+
+    <div class="title-block" role="contentinfo">
+      <div><span>Project</span>5 ft × 10 ft mobile work table, six legs</div>
+      <div><span>Construction</span>2x4 frames on edge, laminated 2x4 legs, 3/4" plywood top</div>
+      <div><span>Source</span><a href="https://github.com/humbamp123/work-table" target="_blank" rel="noopener">github.com/humbamp123/work-table</a></div>
+      <div><span>Sheet</span>1 of 1 · not an engineered design — loads are estimates</div>
+    </div>
+
+  </section>
+</main>
+
+</body>
+</html>

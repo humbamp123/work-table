@@ -1,0 +1,9 @@
+{
+  "name": "work-table",
+  "private": true,
+  "type": "commonjs",
+  "description": "Plan sheet generator for a sturdy, rolling 5 ft x 10 ft work table",
+  "scripts": {
+    "test": "node test.js"
+  }
+}
