@@ -415,6 +415,28 @@
     }, nodes);
   }
 
+  // One caster under a leg centred at cx: plate, wheel, and a foot for leveling casters.
+  function casterNodes(nodes, cx, floorY, c, k) {
+    const wheelR = Math.max((c.casterHeight - 0.5) / 2, 1) * k;
+    nodes.push(svgEl('rect', { class: 'svg-caster', x: cx - 2 * k, y: floorY - c.casterHeight * k, width: 4 * k, height: 0.4 * k }));
+    nodes.push(svgEl('circle', { class: 'svg-caster', cx, cy: floorY - wheelR, r: wheelR }));
+    if (c.mobility.type === 'leveling') {
+      nodes.push(svgEl('rect', { class: 'svg-foot', x: cx + 2.2 * k, y: floorY - 1.2 * k, width: 2 * k, height: 1.2 * k }));
+    }
+  }
+
+  // Chain dimension (caster, pad, king, top) up the left, total height on the right.
+  function heightDimNodes(nodes, r, py, leftX, rightX, k) {
+    let acc = 0;
+    for (const part of r.stack) {
+      if (part.h * k > 14) {
+        nodes.push(dimNodes(leftX, py(acc), leftX, py(acc + part.h), `${part.name} ${fmtLen(part.h)}`, { rotate: -90, dy: -6 }));
+      }
+      acc += part.h;
+    }
+    nodes.push(dimNodes(rightX, py(0), rightX, py(r.config.height), `height ${fmtHeight(r.config.height)}`, { rotate: 90, dy: -6 }));
+  }
+
   function drawElevation(r) {
     const k = 6;
     const pad = 44;
@@ -426,8 +448,7 @@
     const py = (y) => floorY - y * k; // height above floor -> px
     const nodes = [];
 
-    const casterTop = c.casterHeight;
-    const padTop = casterTop + CALC.PAD_T;
+    const padTop = c.casterHeight + CALC.PAD_T;
     const topUnderside = H - r.top.thickness;
 
     // floor
@@ -439,16 +460,8 @@
     for (const s of CALC.LEG_STATIONS) {
       const x = px(O + s - W.w / 2);
       nodes.push(svgEl('rect', { class: 'svg-leg', x, y: py(topUnderside), width: W.w * k, height: (topUnderside - padTop) * k }));
-      // pad
       nodes.push(svgEl('rect', { class: 'svg-wood-dark', x: px(O + s - 3.5), y: py(padTop), width: 7 * k, height: CALC.PAD_T * k }));
-      // caster: plate + wheel, or leveling caster with a foot
-      const cx = px(O + s);
-      const wheelR = Math.max((casterTop - 0.5) / 2, 1) * k;
-      nodes.push(svgEl('rect', { class: 'svg-caster', x: cx - 2 * k, y: py(casterTop), width: 4 * k, height: 0.4 * k }));
-      nodes.push(svgEl('circle', { class: 'svg-caster', cx, cy: floorY - wheelR, r: wheelR }));
-      if (c.mobility.type === 'leveling') {
-        nodes.push(svgEl('rect', { class: 'svg-foot', x: cx + 2.2 * k, y: floorY - 1.2 * k, width: 2 * k, height: 1.2 * k }));
-      }
+      casterNodes(nodes, px(O + s), floorY, c, k);
     }
     // base frame rail (in front of the legs) and shelf
     nodes.push(svgEl('rect', { class: 'svg-wood', x: px(O), y: py(padTop + W.w), width: F.l * k, height: W.w * k }));
@@ -464,17 +477,7 @@
       nodes.push(svgEl('rect', { class: cls, x: px(0), y: py(y + l.t), width: T.l * k, height: l.t * k }));
       y += l.t;
     });
-    // chain dimensions on the left, total on the right
-    const dx = px(0) - 24;
-    let acc = 0;
-    for (const part of r.stack) {
-      if (part.h * k > 14) {
-        nodes.push(dimNodes(dx, py(acc), dx, py(acc + part.h), `${part.name} ${fmtLen(part.h)}`, { rotate: -90, dy: -6 }));
-      }
-      acc += part.h;
-    }
-    const rx = px(T.l) + 26;
-    nodes.push(dimNodes(rx, py(0), rx, py(H), `height ${fmtHeight(H)}`, { rotate: 90, dy: -6 }));
+    heightDimNodes(nodes, r, py, px(0) - 24, px(T.l) + 26, k);
     if (r.shelf) {
       const sx = px(O + 27);
       nodes.push(dimNodes(sx, py(padTop + W.w + CALC.PLY), sx, py(topUnderside), `shelf bay ${fmtLen(r.legs.jack - CALC.PLY)}`, { rotate: -90, dy: -6 }));
@@ -496,9 +499,66 @@
     }, nodes);
   }
 
+  // Looking at the 60" end: overhang both sides, rail ends, legs outside the rails.
+  function drawEnd(r) {
+    const k = 6;
+    const pad = 44;
+    const c = r.config;
+    const T = CALC.TOP, O = CALC.OVERHANG, F = CALC.FRAME, W = CALC.TWO_BY_FOUR;
+    const H = c.height;
+    const LEG_T = 2 * W.t; // king + jack laminated
+    const floorY = pad + H * k + 10;
+    const px = (x) => pad + 40 + x * k; // across the width, 0 = top edge
+    const py = (y) => floorY - y * k;
+    const nodes = [];
+
+    const padTop = c.casterHeight + CALC.PAD_T;
+    const topUnderside = H - r.top.thickness;
+    const legXs = [O - LEG_T, O + F.w]; // left edge of each leg
+
+    nodes.push(svgEl('line', { class: 'svg-floor', x1: px(-8), y1: floorY, x2: px(T.w + 8), y2: floorY }));
+    for (let x = -8; x < T.w + 8; x += 4) {
+      nodes.push(svgEl('line', { class: 'svg-hatch', x1: px(x), y1: floorY, x2: px(x - 2), y2: floorY + 7 }));
+    }
+    for (const lx of legXs) {
+      nodes.push(svgEl('rect', { class: 'svg-leg', x: px(lx), y: py(topUnderside), width: LEG_T * k, height: (topUnderside - padTop) * k }));
+      nodes.push(svgEl('rect', { class: 'svg-wood-dark', x: px(lx + LEG_T / 2 - 2.75), y: py(padTop), width: 5.5 * k, height: CALC.PAD_T * k }));
+      casterNodes(nodes, px(lx + LEG_T / 2), floorY, c, k);
+    }
+    // base and top frames seen end-on: cross member face between the rail ends
+    for (const bottom of [padTop, topUnderside]) {
+      nodes.push(svgEl('rect', { class: 'svg-wood-dark', x: px(O), y: py(bottom + W.w), width: W.t * k, height: W.w * k }));
+      nodes.push(svgEl('rect', { class: 'svg-wood-dark', x: px(O + F.w - W.t), y: py(bottom + W.w), width: W.t * k, height: W.w * k }));
+      nodes.push(svgEl('rect', { class: 'svg-wood', x: px(O + W.t), y: py(bottom + W.w), width: (F.w - 2 * W.t) * k, height: W.w * k }));
+    }
+    if (r.shelf) {
+      nodes.push(svgEl('rect', { class: 'svg-ply', x: px(O), y: py(padTop + W.w + CALC.PLY), width: F.w * k, height: CALC.PLY * k }));
+    }
+    let y = topUnderside;
+    r.top.layers.forEach((l, i) => {
+      const cls = l.t < 0.5 ? 'svg-skin' : i === 0 ? 'svg-ply' : 'svg-ply svg-ply-2';
+      nodes.push(svgEl('rect', { class: cls, x: px(0), y: py(y + l.t), width: T.w * k, height: l.t * k }));
+      y += l.t;
+    });
+    heightDimNodes(nodes, r, py, px(0) - 24, px(T.w) + 26, k);
+    nodes.push(dimNodes(px(0), floorY + 22, px(T.w), floorY + 22, fmtLen(T.w)));
+    nodes.push(dimNodes(px(O), py(H) - 16, px(O + F.w), py(H) - 16, `frame ${fmtLen(F.w)}`));
+    nodes.push(dimNodes(px(0), py(H) - 32, px(O), py(H) - 32, fmtLen(O)));
+    nodes.push(svgEl('text', { class: 'svg-label', x: px(T.w / 2), y: py(H) - 44, 'text-anchor': 'middle' }, 'legs outside the rails'));
+
+    const left = px(-8) - 70;
+    return svgEl('svg', {
+      viewBox: `${left} 0 ${px(T.w + 8) + 60 - left} ${floorY + 40}`,
+      xmlns: SVG_NS,
+      role: 'img',
+      'aria-label': `End elevation of the 60 inch short side: the top overhangs the 48 inch frame by ${fmtLen(O)} each side, with a leg outside each rail${r.shelf ? ' and the shelf between the base rails' : ''}.`,
+    }, nodes);
+  }
+
   function renderDiagrams(r) {
     $('diagram-plan').replaceChildren(drawPlan(r));
     $('diagram-elev').replaceChildren(drawElevation(r));
+    $('diagram-end').replaceChildren(drawEnd(r));
     $('legend-seam-2').hidden = !r.panels[2];
     $('legend-seam-skin').hidden = !r.config.skin;
   }

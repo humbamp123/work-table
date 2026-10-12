@@ -470,6 +470,7 @@ fieldset.optional legend {
 
 .diagram { padding-bottom: 16px; }
 .diagram svg { width: 100%; height: auto; display: block; }
+.diagram-end svg { max-width: 520px; }
 .diagram-title {
   font-family: var(--font-mono);
   font-size: 11.5px;
