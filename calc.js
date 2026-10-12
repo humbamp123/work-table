@@ -378,9 +378,7 @@ function nextTier(lb) {
 }
 
 /*
- * TODO (Andres): the caster policy.
- *
- * Decide the minimum load rating each caster needs, given the table's
+ * Caster policy: the minimum load rating each caster needs, given the table's
  * own weight, the working load the preset assumes, and the mobility spec
  * ({ type: 'leveling' | 'plate', count: 6 }).
  *
@@ -396,9 +394,19 @@ function nextTier(lb) {
  * Return shape (the renderer and tests rely on these keys):
  *   { perCasterLb, tierLb, effectiveCount, safetyFactor }
  * Returning undefined keeps the site working with a "policy not set" note.
+ * Current policy: two of six casters float, 1.5x shock factor, leveling
+ * casters roll with half the working load.
  */
 function requiredCasterRating(tableLb, workingLb, mobility) {
-  return undefined;
+  // Uneven floors: assume two of the casters float, so the rest carry it all.
+  const effectiveCount = Math.max(1, mobility.count - 2);
+  // Rolling over cracks and thresholds is a shock load, not a static one.
+  const safetyFactor = 1.5;
+  // Leveling casters only roll between jobs: budget half the working load
+  // (whatever is left on the top); plate casters roll fully loaded.
+  const rollingLoadLb = tableLb + (mobility.type === 'leveling' ? workingLb / 2 : workingLb);
+  const perCasterLb = Math.ceil((rollingLoadLb * safetyFactor) / effectiveCount);
+  return { perCasterLb, tierLb: nextTier(perCasterLb), effectiveCount, safetyFactor, rollingLoadLb };
 }
 
 /* ---------- everything the page renders ---------- */

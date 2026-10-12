@@ -38,5 +38,13 @@ finished height is the visitor's choice (28"–44"): `king = height − top − 
 
 ## Caster policy
 
-`requiredCasterRating()` in `calc.js` decides the per-caster load rating. It is written by
-the site owner; the policy and its reasoning are recorded here once it lands.
+`requiredCasterRating()` in `calc.js` decides the per-caster load rating:
+
+- **Effective casters:** `count − 2`. On a real floor two of six wheels float, so four carry
+  the whole table.
+- **Safety factor 1.5.** Catalogue ratings are static; rolling over an expansion joint or a
+  threshold is a shock load.
+- **Rolling load:** table weight plus the full working load for plate casters, or half of it
+  for leveling casters, which only roll between jobs with whatever was left on the top.
+- The result is rounded up to the next common catalogue tier (100 … 1200 lb); above the
+  chart the sheet says to use industrial casters.

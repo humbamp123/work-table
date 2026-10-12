@@ -232,6 +232,7 @@ eq('nextTier exact hit', C.nextTier(500), 500);
 eq('nextTier off the chart', C.nextTier(5000), null);
 
 const cr = C.requiredCasterRating(535, 500, C.PRESETS.assembly.mobility);
+ok('caster policy is set (returns an object)', cr !== undefined);
 if (cr === undefined) {
   console.log('SKIP requiredCasterRating — TODO: not written yet (see calc.js)');
 } else {
