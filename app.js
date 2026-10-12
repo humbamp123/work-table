@@ -429,8 +429,13 @@
   function heightDimNodes(nodes, r, py, leftX, rightX, k) {
     let acc = 0;
     for (const part of r.stack) {
-      if (part.h * k > 14) {
-        nodes.push(dimNodes(leftX, py(acc), leftX, py(acc + part.h), `${part.name} ${fmtLen(part.h)}`, { rotate: -90, dy: -6 }));
+      const label = `${part.name} ${fmtLen(part.h)}`;
+      if (part.h * k >= 110) {
+        // long enough to carry a rotated label along the line
+        nodes.push(dimNodes(leftX, py(acc), leftX, py(acc + part.h), label, { rotate: -90, dy: -6 }));
+      } else if (part.h * k > 14) {
+        // short segment: label sits horizontally to the left of the line
+        nodes.push(dimNodes(leftX, py(acc), leftX, py(acc + part.h), label, { dx: -8, dy: 4, anchor: 'end' }));
       }
       acc += part.h;
     }
@@ -490,7 +495,7 @@
       nodes.push(svgEl('text', { class: 'svg-dim-text', x: px(1), y: py(H) - 8, 'text-anchor': 'start' }, `drop ${fmtLen(c.sawDrop)}`));
     }
 
-    const left = c.use === 'outfeed' ? px(-31) - 8 : px(-10) - 70;
+    const left = c.use === 'outfeed' ? px(-31) - 8 : px(-10) - 150;
     return svgEl('svg', {
       viewBox: `${left} 0 ${px(T.l + 10) + 60 - left} ${floorY + 24}`,
       xmlns: SVG_NS,
@@ -546,7 +551,7 @@
     nodes.push(dimNodes(px(0), py(H) - 32, px(O), py(H) - 32, fmtLen(O)));
     nodes.push(svgEl('text', { class: 'svg-label', x: px(T.w / 2), y: py(H) - 44, 'text-anchor': 'middle' }, 'legs outside the rails'));
 
-    const left = px(-8) - 70;
+    const left = px(-8) - 150;
     return svgEl('svg', {
       viewBox: `${left} 0 ${px(T.w + 8) + 60 - left} ${floorY + 40}`,
       xmlns: SVG_NS,
